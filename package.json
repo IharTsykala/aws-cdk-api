@@ -5,7 +5,8 @@
     "build:product": "cd services/product && npm install && npm run build",
     "synth": "cd cdk && cdk synth",
     "deploy:product": "npm run build:product && cd cdk && cdk deploy ProductStack",
-    "deploy:all": "npm run build:product && cd cdk && cdk deploy"
+    "deploy:all": "npm run build:product && cd cdk && cdk deploy",
+    "deploy:docs": "cd cdk && cdk deploy DocsStack"
   },
   "workspaces": [
     "services/product",
