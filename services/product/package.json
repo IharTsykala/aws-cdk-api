@@ -1,0 +1,15 @@
+{
+  "name": "product-service",
+  "version": "1.0.0",
+  "main": "lambda/getProductsList.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.814.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.76",
+    "typescript": "^4.3.5"
+  }
+}

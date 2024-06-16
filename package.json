@@ -1,0 +1,14 @@
+{
+  "name": "aws-api-services",
+  "version": "1.0.0",
+  "scripts": {
+    "build:product": "cd services/product && npm install && npm run build",
+    "synth": "cd cdk && cdk synth",
+    "deploy:product": "npm run build:product && cd cdk && cdk deploy ProductStack",
+    "deploy:all": "npm run build:product && cd cdk && cdk deploy"
+  },
+  "workspaces": [
+    "services/product",
+    "cdk"
+  ]
+}
