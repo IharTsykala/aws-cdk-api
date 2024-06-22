@@ -1,0 +1,21 @@
+{
+  "name": "aws-api-services",
+  "version": "1.0.0",
+  "scripts": {
+    "build:product": "cd services/product && npm install && npm run build",
+    "synth": "cd cdk && cdk synth",
+    "deploy:product": "npm run build:product && cd cdk && cdk deploy ProductStack",
+    "deploy:all": "npm run build:product && cd cdk && cdk deploy",
+    "deploy:docs": "cd cdk && cdk deploy DocsStack",
+    "test": "jest"
+  },
+  "workspaces": [
+    "services/product",
+    "cdk"
+  ],
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.5"
+  }
+}
