@@ -2,17 +2,17 @@ import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
 
 //types and interfaces
-import { ProductWithStock  } from "../../types";
+import { IProductWithStock } from "../../types";
 
 //constants
 import {Product, REGIONS_NAME, TABLES_NAME} from "../../constants";
 
 const client = new DynamoDBClient({
-    region: REGIONS_NAME.US_EAST_1,
+    region: REGIONS_NAME.EU_CENTRAL_1,
 });
 
 export const fillProductsTable = async () => {
-    const clonedProductsData: ProductWithStock[] = structuredClone(Product);
+    const clonedProductsData: IProductWithStock[] = structuredClone(Product);
 
     for (const product of clonedProductsData) {
         const id = uuidv4();

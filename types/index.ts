@@ -1,1 +1,1 @@
-export { Stock, ProductWithStock } from './product'
+export { IProduct, IStock, IProductWithStock, IProductWithCount } from './product'

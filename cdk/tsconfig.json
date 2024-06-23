@@ -21,8 +21,11 @@
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
     "typeRoots": [
-      "./node_modules/@types"
-    ]
+      "../node_modules/@types"
+    ],
+    "types": ["node"],
+    "esModuleInterop": true,
+    "resolveJsonModule": true
   },
   "exclude": [
     "node_modules",
