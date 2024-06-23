@@ -43,13 +43,24 @@ export class ProductStack extends cdk.Stack {
       },
     });
 
+    const createProduct = new lambda.Function(this, 'createProduct', {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      code: lambda.Code.fromAsset(distPath),
+      handler: 'createProduct.handler',
+      environment: {
+        PRODUCTS_TABLE_NAME: productsTable.tableName,
+        STOCKS_TABLE_NAME: stocksTable.tableName,
+      },
+    });
+
     const dynamoDbPolicy = new iam.PolicyStatement({
-      actions: ['dynamodb:Scan', 'dynamodb:GetItem'],
+      actions: ['dynamodb:Scan', 'dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:TransactWriteItems'],
       resources: [productsTable.tableArn, stocksTable.tableArn],
     });
 
     getProductsList.addToRolePolicy(dynamoDbPolicy);
     getProductsById.addToRolePolicy(dynamoDbPolicy);
+    createProduct.addToRolePolicy(dynamoDbPolicy);
 
     const api = new apigateway.RestApi(this, 'ProductApi', {
       restApiName: 'Product Service',
@@ -63,6 +74,7 @@ export class ProductStack extends cdk.Stack {
     });
 
     products.addMethod('GET', new apigateway.LambdaIntegration(getProductsList));
+    products.addMethod('POST', new apigateway.LambdaIntegration(createProduct));
 
     const productById = products.addResource('{productId}');
     productById.addMethod('GET', new apigateway.LambdaIntegration(getProductsById));

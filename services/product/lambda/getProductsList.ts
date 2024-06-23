@@ -21,35 +21,47 @@ export const REGIONS_NAME = {
 const client: DynamoDBClient = new DynamoDBClient({ region: REGIONS_NAME.EU_CENTRAL_1 });
 
 export const handler: APIGatewayProxyHandler = async (event) => {
+    console.log('Received request:', JSON.stringify(event));
     const productsTableName = process.env.PRODUCTS_TABLE_NAME;
     const stocksTableName = process.env.STOCKS_TABLE_NAME;
 
     const productsParams = {
         TableName: productsTableName,
     };
-    const productsResult = await client.send(new ScanCommand(productsParams));
-    let products = productsResult.Items ?? [];
 
-    const stocksParams = {
-        TableName: stocksTableName,
-    };
-    const stocksResult = await client.send(new ScanCommand(stocksParams));
-    const stocks = stocksResult.Items ?? [];
+    try {
+        const productsResult = await client.send(new ScanCommand(productsParams));
+        let products = productsResult.Items ?? [];
 
-    const productsWithCount: IProductWithCount[] = products.map(product => {
-        const stock = stocks.find(s => s.product_id.S === product.id.S);
-        return {
-            id: product.id.S as string,
-            title: product.title.S as string,
-            description: product.description.S as string,
-            price: parseInt(product.price.N as string),
-            count: stock ? parseInt(stock.count.N as string) : 0,
+        const stocksParams = {
+            TableName: stocksTableName,
         };
-    });
 
-    return {
-        statusCode: 200,
-        headers: HEADERS,
-        body: JSON.stringify(productsWithCount),
-    };
+        const stocksResult = await client.send(new ScanCommand(stocksParams));
+        const stocks = stocksResult.Items ?? [];
+
+        const productsWithCount: IProductWithCount[] = products.map(product => {
+            const stock = stocks.find(s => s.product_id.S === product.id.S);
+            return {
+                id: product.id.S as string,
+                title: product.title.S as string,
+                description: product.description.S as string,
+                price: parseInt(product.price.N as string),
+                count: stock ? parseInt(stock.count.N as string) : 0,
+            };
+        });
+
+        return {
+            statusCode: 200,
+            headers: HEADERS,
+            body: JSON.stringify(productsWithCount),
+        };
+    } catch (error) {
+        console.error('Error getting products list:', error);
+        return {
+            statusCode: 500,
+            headers: HEADERS,
+            body: JSON.stringify({ message: 'Internal Server Error' }),
+        };
+    }
 };
