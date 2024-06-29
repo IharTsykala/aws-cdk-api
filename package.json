@@ -7,11 +7,13 @@
     "build:product": "cd services/product && npm install && npm run build",
     "synth": "cd cdk && cdk synth",
     "deploy:product": "npm run build:product && cd cdk && cdk deploy ProductStack",
+    "deploy:import": "cd cdk && cdk deploy ImportStack",
     "deploy:all": "npm run build:product && cd cdk && cdk deploy --all",
     "deploy:docs": "cd cdk && cdk deploy DocsStack",
     "test": "jest",
     "fill:products-stocks": "ts-node scripts/tables/fill-products-stocks.ts",
     "delete:product": "cd cdk && cdk destroy ProductStack -f",
+    "delete:import": "cd cdk && cdk destroy ImportStack -f",
     "delete:all": "cd cdk && cdk destroy --all -f"
   },
   "workspaces": [
@@ -26,6 +28,7 @@
     "ts-jest": "^29.1.5"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.602.0"
+    "@aws-sdk/client-dynamodb": "^3.602.0",
+    "csv-parser": "^3.0.0"
   }
 }
