@@ -1,11 +1,13 @@
 {
   "compilerOptions": {
-    "target": "es6",
     "module": "commonjs",
+    "target": "es6",
+    "outDir": "dist",
+    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
-    "outDir": "dist",
-    "rootDir": "./"
+    "declaration": true,
+    "sourceMap": true
   },
   "include": ["lambda/**/*.ts"],
   "exclude": ["node_modules"]
