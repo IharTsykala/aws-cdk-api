@@ -2,7 +2,7 @@ import {APIGatewayProxyHandler, AttributeValue} from 'aws-lambda';
 import { DynamoDBClient, ScanCommand } from '@aws-sdk/client-dynamodb';
 
 //types and interfaces
-import { IProductWithCount } from "../../../types";
+import { IProductWithCount } from "../types";
 
 //constants
 // import { HEADERS, REGIONS_NAME } from "../constants";

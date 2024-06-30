@@ -2,13 +2,13 @@
   "name": "import-service",
   "version": "1.0.0",
   "description": "Service to import data",
-  "main": "dist/index.js",
+  "main": "dist/lambda",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "build": "tsc"
   },
   "dependencies": {
-    "aws-sdk": "^2.814.0",
+    "@aws-sdk/client-s3": "^3.0.0",
+    "@aws-sdk/s3-request-presigner": "^3.0.0",
     "csv-parser": "^3.0.0"
   },
   "devDependencies": {

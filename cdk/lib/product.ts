@@ -11,7 +11,7 @@ export class ProductStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const distPath = path.resolve(__dirname, '../../services/product/dist/services/product/lambda');
+    const distPath = path.resolve(__dirname, '../../services/product/lambda');
 
     const productsTable = new dynamodb.Table(this, 'ProductsTable', {
       tableName: 'products',

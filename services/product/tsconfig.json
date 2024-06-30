@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "es6",
     "module": "commonjs",
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist"
+    "outDir": "dist",
+    "rootDir": "./"
   },
-  "include": ["lambda/**/*.ts"]
+  "include": ["lambda/**/*.ts"],
+  "exclude": ["node_modules"]
 }

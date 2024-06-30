@@ -3,12 +3,14 @@
   "version": "1.0.0",
   "scripts": {
     "clean:product": "rm -rf services/product/dist",
+    "clean:import": "rm -rf services/import/dist",
     "clean:cdk": "rm -rf cdk/cdk.out",
     "build:product": "cd services/product && npm install && npm run build",
+    "build:import": "cd services/import && npm install && npm run build",
     "synth": "cd cdk && cdk synth",
     "deploy:product": "npm run build:product && cd cdk && cdk deploy ProductStack",
-    "deploy:import": "cd cdk && cdk deploy ImportStack",
-    "deploy:all": "npm run build:product && cd cdk && cdk deploy --all",
+    "deploy:import": "npm run build:import && cd cdk && cdk deploy ImportStack",
+    "deploy:all": "npm run build:product && npm run build:import && cd cdk && cdk deploy --all",
     "deploy:docs": "cd cdk && cdk deploy DocsStack",
     "test": "jest",
     "fill:products-stocks": "ts-node scripts/tables/fill-products-stocks.ts",
@@ -18,6 +20,7 @@
   },
   "workspaces": [
     "services/product",
+    "services/import",
     "cdk"
   ],
   "devDependencies": {
