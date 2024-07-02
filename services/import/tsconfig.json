@@ -7,8 +7,12 @@
     "strict": true,
     "esModuleInterop": true,
     "declaration": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["lambda/**/*.ts"],
+  "include": [
+    "../import/lambda/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

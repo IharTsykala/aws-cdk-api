@@ -2,12 +2,11 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
-const s3 = new S3Client({ region: process.env.AWS_REGION });
+const s3 = new S3Client({ region: 'eu-central-1' });
 
 export const handler: APIGatewayProxyHandler = async (event) => {
     const bucketName = process.env.BUCKET_NAME ?? 'import-csv-rss';
 
-    // Проверка наличия имени файла в запросе
     const fileName = event.queryStringParameters?.name;
 
     if (!fileName) {
@@ -27,7 +26,6 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const objectKey = `uploaded/${fileName}`;
 
     try {
-        // Создание подписанной URL для загрузки файла
         const command = new PutObjectCommand({
             Bucket: bucketName,
             Key: objectKey,

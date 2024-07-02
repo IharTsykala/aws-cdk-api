@@ -1,18 +1,21 @@
 {
-  "name": "import-service",
+  "name": "import",
   "version": "1.0.0",
-  "description": "Service to import data",
-  "main": "dist/lambda",
+  "description": "",
+  "main": "lambda",
   "scripts": {
     "build": "tsc"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.0.0",
+    "@aws-sdk/client-s3": "^3.606.0",
     "@aws-sdk/s3-request-presigner": "^3.0.0",
     "csv-parser": "^3.0.0"
   },
   "devDependencies": {
-    "@types/aws-lambda": "^8.10.76",
-    "typescript": "^5.1.3"
+    "@types/aws-lambda": "^8.10.140",
+    "typescript": "^5.5.2"
   }
 }

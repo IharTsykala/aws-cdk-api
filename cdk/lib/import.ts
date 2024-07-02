@@ -2,8 +2,10 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
+
 import path from "path";
 
 export class ImportStack extends cdk.Stack {
@@ -15,6 +17,20 @@ export class ImportStack extends cdk.Stack {
             versioned: true,
             removalPolicy: cdk.RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
+            cors: [
+                {
+                    allowedOrigins: ['*'],
+                    allowedHeaders: ['*'],
+                    allowedMethods: [
+                        s3.HttpMethods.GET,
+                        s3.HttpMethods.PUT,
+                        s3.HttpMethods.POST,
+                        s3.HttpMethods.DELETE,
+                        s3.HttpMethods.HEAD,
+                    ],
+                    maxAge: 3000,
+                },
+            ],
         });
 
         const distPath = path.resolve(__dirname, '../../services/import/dist/lambda');
@@ -28,8 +44,31 @@ export class ImportStack extends cdk.Stack {
             },
         });
 
+        const importFileParserFunction = new lambda.Function(this, 'ImportParserFunction', {
+            runtime: lambda.Runtime.NODEJS_20_X,
+            handler: 'importFileParser.handler',
+            code: lambda.Code.fromAsset(distPath),
+            environment: {
+                BUCKET_NAME: bucket.bucketName,
+            },
+        });
+
+        bucket.grantRead(importFunction);
+        bucket.grantReadWrite(importFileParserFunction);
+
+        bucket.addEventNotification(
+            s3.EventType.OBJECT_CREATED,
+            new s3n.LambdaDestination(importFileParserFunction),
+            { prefix: 'uploaded/' }
+        );
+
         importFunction.addToRolePolicy(new iam.PolicyStatement({
-            actions: ['s3:GetObject', 's3:PutObject', 's3:ListBucket'],
+            actions: ['s3:GetObject', 's3:PutObject', 's3:ListBucket', 's3:CopyObject', 's3:DeleteObject'],
+            resources: [bucket.bucketArn, `${bucket.bucketArn}/*`],
+        }));
+
+        importFileParserFunction.addToRolePolicy(new iam.PolicyStatement({
+            actions: ['s3:GetObject', 's3:PutObject', 's3:ListBucket', 's3:CopyObject', 's3:DeleteObject'],
             resources: [bucket.bucketArn, `${bucket.bucketArn}/*`],
         }));
 
@@ -44,6 +83,12 @@ export class ImportStack extends cdk.Stack {
             requestParameters: {
                 'method.request.querystring.name': true,
             },
+        });
+
+        api.root.addCorsPreflight({
+            allowOrigins: apigateway.Cors.ALL_ORIGINS,
+            allowHeaders: apigateway.Cors.DEFAULT_HEADERS,
+            allowMethods: apigateway.Cors.ALL_METHODS,
         });
 
         api.addGatewayResponse('MissingNameQueryParam', {
