@@ -3,6 +3,7 @@ import { DynamoDBClient, TransactWriteItemsCommand } from '@aws-sdk/client-dynam
 // import { v4 as uuidv4 } from 'uuid';
 
 //constants
+import { HEADERS as HEADERS_INDEX} from '../constants'
 export const HEADERS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
