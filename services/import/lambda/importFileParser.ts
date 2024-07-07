@@ -1,9 +1,13 @@
 import { S3Event, S3Handler } from 'aws-lambda';
 import { S3Client, GetObjectCommand, CopyObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { SQSClient, SendMessageCommand } from '@aws-sdk/client-sqs';
 import csv from 'csv-parser';
 import { Readable } from 'stream';
 
 const s3 = new S3Client({ region: 'eu-central-1' });
+const sqs = new SQSClient({ region: 'eu-central-1' });
+
+const queueUrl = process.env.SQS_QUEUE_URL;
 
 export const handler: S3Handler = async (event: S3Event) => {
     for (const record of event.Records) {
@@ -22,31 +26,40 @@ export const handler: S3Handler = async (event: S3Event) => {
 
             readableStream
                 .pipe(csv())
-                .on('data', (row) => {
-                    console.log('Parsed row:', row);
+                .on('data', async (row) => {
+                    // Send each parsed row to SQS
+                    try {
+                        await sqs.send(new SendMessageCommand({
+                            QueueUrl: queueUrl,
+                            MessageBody: JSON.stringify(row),
+                        }));
+                        console.log('Message sent to SQS:', row); // Log the message sent to SQS
+                    } catch (error) {
+                        console.error('Error sending message to SQS:', error); // Log any error during sending message to SQS
+                    }
                 })
                 .on('end', async () => {
-                    console.log('CSV file successfully processed');
+                    console.log('CSV file successfully processed'); // Log when CSV file processing is completed
 
                     await s3.send(new CopyObjectCommand({
                         Bucket: bucket,
                         CopySource: `${bucket}/${key}`,
                         Key: parsedKey,
                     }));
-                    console.log(`File copied to ${parsedKey}`);
+                    console.log(`File copied to ${parsedKey}`); // Log when file is copied
 
                     await s3.send(new DeleteObjectCommand({
                         Bucket: bucket,
                         Key: key,
                     }));
-                    console.log(`File moved to ${parsedKey}`);
+                    console.log(`File moved to ${parsedKey}`); // Log when file is moved
                 })
                 .on('error', (error: Error) => {
-                    console.error('Error processing CSV file', error);
+                    console.error('Error processing CSV file', error); // Log any error during CSV file processing
                 });
 
         } catch (error) {
-            console.error('Error getting object from S3', error);
+            console.error('Error getting object from S3', error); // Log any error during getting object from S3
         }
     }
 };
