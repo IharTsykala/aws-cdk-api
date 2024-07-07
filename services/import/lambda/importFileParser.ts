@@ -33,33 +33,33 @@ export const handler: S3Handler = async (event: S3Event) => {
                             QueueUrl: queueUrl,
                             MessageBody: JSON.stringify(row),
                         }));
-                        console.log('Message sent to SQS:', row); // Log the message sent to SQS
+                        console.log('Message sent to SQS:', row);
                     } catch (error) {
-                        console.error('Error sending message to SQS:', error); // Log any error during sending message to SQS
+                        console.error('Error sending message to SQS:', error);
                     }
                 })
                 .on('end', async () => {
-                    console.log('CSV file successfully processed'); // Log when CSV file processing is completed
+                    console.log('CSV file successfully processed');
 
                     await s3.send(new CopyObjectCommand({
                         Bucket: bucket,
                         CopySource: `${bucket}/${key}`,
                         Key: parsedKey,
                     }));
-                    console.log(`File copied to ${parsedKey}`); // Log when file is copied
+                    console.log(`File copied to ${parsedKey}`);
 
                     await s3.send(new DeleteObjectCommand({
                         Bucket: bucket,
                         Key: key,
                     }));
-                    console.log(`File moved to ${parsedKey}`); // Log when file is moved
+                    console.log(`File moved to ${parsedKey}`);
                 })
                 .on('error', (error: Error) => {
-                    console.error('Error processing CSV file', error); // Log any error during CSV file processing
+                    console.error('Error processing CSV file', error);
                 });
 
         } catch (error) {
-            console.error('Error getting object from S3', error); // Log any error during getting object from S3
+            console.error('Error getting object from S3', error);
         }
     }
 };

@@ -4,6 +4,8 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as subs from 'aws-cdk-lib/aws-sns-subscriptions'
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 
 import { Construct } from 'constructs';
@@ -116,5 +118,15 @@ export class ProductStack extends cdk.Stack {
     });
 
     importFileParser.addToRolePolicy(sqsPolicy);
+
+    const createProductTopic = new sns.Topic(this, 'CreateProductTopic', {
+      displayName: 'Create Product Topic',
+    });
+
+    createProductTopic.addSubscription(new subs.EmailSubscription('tsykalaihar24@gmail.com'));
+
+    catalogBatchProcessFunction.addEnvironment('SNS_TOPIC_ARN', createProductTopic.topicArn);
+
+    createProductTopic.grantPublish(catalogBatchProcessFunction);
   }
 }
