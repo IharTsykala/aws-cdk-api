@@ -15,7 +15,7 @@ export class ProductStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const distPath = path.resolve(__dirname, '../../services/product/lambda');
+    const distPath = path.resolve(__dirname, '../../services/product/dist/lambda');
 
     const productsTable = new dynamodb.Table(this, 'ProductsTable', {
       tableName: 'products',
@@ -84,9 +84,26 @@ export class ProductStack extends cdk.Stack {
     productById.addMethod('GET', new apigateway.LambdaIntegration(getProductsById));
 
     const catalogItemsQueue = new sqs.Queue(this, 'CatalogItemsQueue', {
+      queueName: 'catalog-items-queue',
       visibilityTimeout: cdk.Duration.seconds(300),
       receiveMessageWaitTime: cdk.Duration.seconds(20),
     });
+
+    new cdk.CfnOutput(this, 'CatalogItemsQueueArn', {
+      value: catalogItemsQueue.queueArn,
+      exportName: 'CatalogItemsQueueArn'
+    });
+
+    new cdk.CfnOutput(this, 'CatalogItemsQueueUrl', {
+      value: catalogItemsQueue.queueUrl,
+      exportName: 'CatalogItemsQueueUrl'
+    });
+
+    const createProductTopic = new sns.Topic(this, 'CreateProductTopic', {
+      displayName: 'Create Product Topic',
+    });
+
+    createProductTopic.addSubscription(new subs.EmailSubscription('ihartsykala24@gmail.com'));
 
     const catalogBatchProcessFunction = new lambda.Function(this, 'CatalogBatchProcessFunction', {
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -94,39 +111,17 @@ export class ProductStack extends cdk.Stack {
       handler: 'catalogBatchProcess.handler',
       environment: {
         PRODUCTS_TABLE_NAME: productsTable.tableName,
-      },
+        SNS_TOPIC_ARN: createProductTopic.topicArn,
+      }
     });
-
-    productsTable.grantReadWriteData(catalogBatchProcessFunction);
 
     catalogBatchProcessFunction.addEventSource(new SqsEventSource(catalogItemsQueue, {
       batchSize: 5,
     }));
 
-    const importFileParser = new lambda.Function(this, 'importFileParser', {
-      runtime: lambda.Runtime.NODEJS_20_X,
-      code: lambda.Code.fromAsset(distPath),
-      handler: 'importFileParser.handler',
-      environment: {
-        SQS_QUEUE_URL: catalogItemsQueue.queueUrl,
-      },
-    });
-
-    const sqsPolicy = new iam.PolicyStatement({
-      actions: ['sqs:SendMessage'],
-      resources: [catalogItemsQueue.queueArn],
-    });
-
-    importFileParser.addToRolePolicy(sqsPolicy);
-
-    const createProductTopic = new sns.Topic(this, 'CreateProductTopic', {
-      displayName: 'Create Product Topic',
-    });
-
-    createProductTopic.addSubscription(new subs.EmailSubscription('tsykalaihar24@gmail.com'));
-
-    catalogBatchProcessFunction.addEnvironment('SNS_TOPIC_ARN', createProductTopic.topicArn);
-
+    productsTable.grantReadWriteData(catalogBatchProcessFunction);
     createProductTopic.grantPublish(catalogBatchProcessFunction);
+
+    catalogBatchProcessFunction.addToRolePolicy(dynamoDbPolicy);
   }
 }
