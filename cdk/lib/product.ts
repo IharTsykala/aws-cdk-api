@@ -105,6 +105,18 @@ export class ProductStack extends cdk.Stack {
 
     createProductTopic.addSubscription(new subs.EmailSubscription('ihartsykala24@gmail.com'));
 
+    createProductTopic.addSubscription(new subs.EmailSubscription('ihartsykala25@gmail.com', {
+      filterPolicy: {
+        price: sns.SubscriptionFilter.numericFilter({ lessThanOrEqualTo: 10 }),
+      },
+    }));
+
+    createProductTopic.addSubscription(new subs.EmailSubscription('ihartsykala26@gmail.com', {
+      filterPolicy: {
+        price: sns.SubscriptionFilter.numericFilter({ greaterThan: 10 }),
+      },
+    }));
+
     const catalogBatchProcessFunction = new lambda.Function(this, 'CatalogBatchProcessFunction', {
       runtime: lambda.Runtime.NODEJS_20_X,
       code: lambda.Code.fromAsset(distPath),
