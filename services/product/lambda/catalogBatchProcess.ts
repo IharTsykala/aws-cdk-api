@@ -14,11 +14,11 @@ export const handler: SQSHandler = async (event: SQSEvent): Promise<void> => {
         return {
             PutRequest: {
                 Item: {
-                    id: { S: product.id },
-                    title: { S: product.title },
-                    description: { S: product.description },
-                    price: { N: product.price.toString() },
-                    count: { N: product.count.toString() },
+                    id: { S: product?.id },
+                    title: { S: product?.title },
+                    description: { S: product?.description },
+                    price: { N: product.price?.toString() },
+                    count: { N: product.count?.toString() },
                 },
             },
         };

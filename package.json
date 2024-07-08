@@ -12,7 +12,7 @@
     "deploy:import": "npm run build:import && cd cdk && cdk deploy ImportStack",
     "deploy:all": "npm run build:product && npm run build:import && cd cdk && cdk deploy --all",
     "deploy:docs": "cd cdk && cdk deploy DocsStack",
-    "test": "jest tests/importProductsFile.test.ts tests/importFileParser.test.ts",
+    "test": "jest tests/catalogBatchProcess.test.ts",
     "fill:products-stocks": "ts-node scripts/tables/fill-products-stocks.ts",
     "delete:product": "cd cdk && cdk destroy ProductStack -f",
     "delete:import": "cd cdk && cdk destroy ImportStack -f",
