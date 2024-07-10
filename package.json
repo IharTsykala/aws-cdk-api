@@ -12,7 +12,7 @@
     "deploy:import": "npm run build:import && cd cdk && cdk deploy ImportStack",
     "deploy:all": "npm run build:product && npm run build:import && cd cdk && cdk deploy --all",
     "deploy:docs": "cd cdk && cdk deploy DocsStack",
-    "test": "jest tests/importProductsFile.test.ts tests/importFileParser.test.ts",
+    "test": "jest tests/catalogBatchProcess.test.ts",
     "fill:products-stocks": "ts-node scripts/tables/fill-products-stocks.ts",
     "delete:product": "cd cdk && cdk destroy ProductStack -f",
     "delete:import": "cd cdk && cdk destroy ImportStack -f",
@@ -31,8 +31,13 @@
     "ts-jest": "^29.1.5"
   },
   "dependencies": {
+    "@aws-cdk/aws-lambda-nodejs": "^1.204.0",
     "@aws-sdk/client-dynamodb": "^3.602.0",
+    "@aws-sdk/client-s3": "^3.0.0",
+    "@aws-sdk/client-sns": "^3.609.0",
+    "@aws-sdk/client-sqs": "^3.609.0",
     "csv-parser": "^3.0.0",
-    "@aws-sdk/client-s3": "^3.0.0"
+    "esbuild": "^0.23.0",
+    "fast-csv": "^5.0.1"
   }
 }

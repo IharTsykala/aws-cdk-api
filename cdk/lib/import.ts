@@ -1,12 +1,13 @@
 import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
-
-import path from "path";
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { Construct } from 'constructs';
+import * as path from 'path';
 
 export class ImportStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -35,7 +36,7 @@ export class ImportStack extends cdk.Stack {
 
         const distPath = path.resolve(__dirname, '../../services/import/dist/lambda');
 
-        const importFunction = new lambda.Function(this, 'ImportFunction', {
+        const importFunction = new NodejsFunction(this, 'ImportFunction', {
             runtime: lambda.Runtime.NODEJS_20_X,
             handler: 'importProductsFile.handler',
             code: lambda.Code.fromAsset(distPath),
@@ -44,14 +45,23 @@ export class ImportStack extends cdk.Stack {
             },
         });
 
-        const importFileParserFunction = new lambda.Function(this, 'ImportParserFunction', {
+        const queueArn = cdk.Fn.importValue('CatalogItemsQueueArn');
+        const queueUrl = cdk.Fn.importValue('CatalogItemsQueueUrl');
+
+        const importFileParserFunction = new NodejsFunction(this, 'ImportParserFunction', {
             runtime: lambda.Runtime.NODEJS_20_X,
-            handler: 'importFileParser.handler',
-            code: lambda.Code.fromAsset(distPath),
+            handler: 'handler',
+            entry: path.join(distPath, 'importFileParser.js'),
             environment: {
                 BUCKET_NAME: bucket.bucketName,
+                SQS_QUEUE_URL: queueUrl,
             },
         });
+
+        importFileParserFunction.addToRolePolicy(new iam.PolicyStatement({
+            actions: ['sqs:SendMessage', 'sqs:GetQueueAttributes', 'sqs:GetQueueUrl'],
+            resources: [queueArn],
+        }));
 
         bucket.grantRead(importFunction);
         bucket.grantReadWrite(importFileParserFunction);

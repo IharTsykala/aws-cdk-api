@@ -43,11 +43,11 @@ export const handler: APIGatewayProxyHandler = async (event) => {
         const productsWithCount: IProductWithCount[] = products.map(product => {
             const stock = stocks.find(s => s.product_id.S === product.id.S);
             return {
-                id: product.id.S as string,
-                title: product.title.S as string,
-                description: product.description.S as string,
-                price: parseInt(product.price.N as string),
-                count: stock ? parseInt(stock.count.N as string) : 0,
+                id: product.id?.S as string,
+                title: product.title?.S as string,
+                description: product.description?.S as string,
+                price: parseInt(product.price?.N as string),
+                count: stock ? parseInt(stock.count?.N as string) : 0,
             };
         });
 
