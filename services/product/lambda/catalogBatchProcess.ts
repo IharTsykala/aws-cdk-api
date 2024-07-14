@@ -1,47 +1,52 @@
-import { SQSEvent, SQSHandler } from 'aws-lambda';
-import { DynamoDBClient, BatchWriteItemCommand } from '@aws-sdk/client-dynamodb';
+import { SQSHandler } from 'aws-lambda';
+import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
 
-const dynamoDbClient = new DynamoDBClient({ region: 'eu-central-1' });
-const snsClient = new SNSClient({ region: 'eu-central-1' });
-const productsTableName = process.env.PRODUCTS_TABLE_NAME ?? "products";
-const snsTopicArn = process.env.SNS_TOPIC_ARN ?? "";
+const ddb = new DynamoDBClient({ region: 'eu-central-1' });
+const sns = new SNSClient({ region: 'eu-central-1' });
 
-export const handler: SQSHandler = async (event: SQSEvent): Promise<void> => {
+const productsTableName = process.env.PRODUCTS_TABLE_NAME;
+const snsTopicArn = process.env.SNS_TOPIC_ARN;
+
+const generateRandomId = () => {
+    return Math.random().toString(36).slice(2, 11);
+}
+
+export const handler: SQSHandler = async (event) => {
+    console.log('Received SQS event:', JSON.stringify(event));
+
     const putRequests = event.Records.map(record => {
         const product = JSON.parse(record.body);
-
-        return {
-            PutRequest: {
-                Item: {
-                    id: { S: product?.id },
-                    title: { S: product?.title },
-                    description: { S: product?.description },
-                    price: { N: product.price?.toString() },
-                    count: { N: product.count?.toString() },
-                },
+        const id = generateRandomId();
+        const params = {
+            TableName: productsTableName,
+            Item: {
+                id: { S: id },
+                title: { S: product.title },
+                description: { S: product.description },
+                price: { N: product.price.toString() },
+                count: { N: product.count.toString() },
             },
         };
+
+        console.log('Putting item in DynamoDB:', params);
+        return ddb.send(new PutItemCommand(params));
     });
 
-    const params = {
-        RequestItems: {
-            [productsTableName]: putRequests,
-        },
-    };
-
     try {
-        await dynamoDbClient.send(new BatchWriteItemCommand(params));
-        console.log('Products created successfully.');
+        await Promise.all(putRequests);
 
-        const snsMessage = {
-            Message: 'Products created successfully.',
+        console.log('All items have been put in DynamoDB.');
+
+        const publishParams = {
+            Message: JSON.stringify({ default: 'Products have been created' }),
+            MessageStructure: 'json',
             TopicArn: snsTopicArn,
         };
 
-        await snsClient.send(new PublishCommand(snsMessage));
-        console.log('SNS message sent successfully.');
-    } catch (error) {
-        console.error('Error creating products:', error);
+        await sns.send(new PublishCommand(publishParams));
+        console.log('SNS message has been sent.');
+    } catch (err) {
+        console.error('Error creating products:', err);
     }
 };
