@@ -12,7 +12,7 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "../import/lambda/**/*.ts"
+    "../authorization-service/lambda/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

@@ -22,10 +22,10 @@ export const handler: SQSHandler = async (event) => {
             TableName: productsTableName,
             Item: {
                 id: { S: id },
-                title: { S: product.title },
-                description: { S: product.description },
-                price: { N: product.price.toString() },
-                count: { N: product.count.toString() },
+                title: { S: product?.title },
+                description: { S: product?.description },
+                price: { N: product.price?.toString() },
+                count: { N: product.count?.toString() },
             },
         };
 

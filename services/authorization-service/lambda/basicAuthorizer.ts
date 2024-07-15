@@ -1,26 +1,25 @@
-import { APIGatewayAuthorizerResult, APIGatewayTokenAuthorizerEvent, Context, Callback } from 'aws-lambda';
-import * as dotenv from 'dotenv';
-import * as base64 from 'base-64';
-
-dotenv.config();
+import { APIGatewayTokenAuthorizerEvent, APIGatewayAuthorizerResult, Context, Callback } from 'aws-lambda';
 
 export const handler = (event: APIGatewayTokenAuthorizerEvent, context: Context, callback: Callback<APIGatewayAuthorizerResult>): void => {
+    console.log('event.authorizationToken', event.authorizationToken);
     if (!event.authorizationToken) {
-        callback('Unauthorized');
+        callback(null, generateErrorResponse('Unauthorized', 401));
         return;
     }
 
     const token = event.authorizationToken.split(' ')[1];
-    const decodedToken = base64.decode(token);
+    const decodedToken = Buffer.from(token, 'base64').toString('utf-8');
+    console.log('decodedToken', decodedToken);
     const [username, password] = decodedToken.split(':');
 
-    const storedPassword = process.env[username];
+    const storedPassword = process?.env?.TEST_PASSWORD ?? "TEST_PASSWORD";
+    const storedUsername = process?.env?.GITHUB_ACCOUNT_LOGIN ?? "IharTsykala";
 
-    if (storedPassword === password) {
+    if (username === storedUsername && password === storedPassword) {
         const policy = generatePolicy('user', 'Allow', event.methodArn);
         callback(null, policy);
     } else {
-        callback('Unauthorized');
+        callback(null, generateErrorResponse('Unauthorized', 403));
     }
 };
 
@@ -37,4 +36,22 @@ const generatePolicy = (principalId: string, effect: 'Allow' | 'Deny', resource:
         }
     };
     return authResponse;
+};
+
+const generateErrorResponse = (message: string, statusCode: number): APIGatewayAuthorizerResult => {
+    return {
+        principalId: 'user',
+        policyDocument: {
+            Version: '2012-10-17',
+            Statement: [{
+                Action: 'execute-api:Invoke',
+                Effect: 'Deny',
+                Resource: '*'
+            }]
+        },
+        context: {
+            statusCode: statusCode,
+            message: message
+        }
+    };
 };
