@@ -2,7 +2,7 @@
 
 front repo IharTsykala/nodejs-aws-shop-react#5
 
-cloud front https://d1l6ky6gsozw3a.cloudfront.net/
+cloud front https://dfambu0cbxdjq.cloudfront.net/
 
 getProductsList https://y4nj3dnlae.execute-api.eu-central-1.amazonaws.com/prod/products
 
