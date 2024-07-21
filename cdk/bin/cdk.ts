@@ -6,8 +6,10 @@ import * as cdk from 'aws-cdk-lib';
 import { ProductStack } from '../lib/product';
 import { ImportStack } from "../lib/import";
 import { DocsStack } from "../lib/docs";
+import { AuthorizationServiceStack } from '../lib/authorization';
 
 const app = new cdk.App();
 new ProductStack(app, 'ProductStack', {});
 new ImportStack(app, 'ImportStack');
 new DocsStack(app, 'DocsStack');
+new AuthorizationServiceStack(app, 'AuthorizationServiceStack');

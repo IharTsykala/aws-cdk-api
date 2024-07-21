@@ -5,7 +5,7 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as sqs from 'aws-cdk-lib/aws-sqs';
+
 import { Construct } from 'constructs';
 import * as path from 'path';
 
@@ -89,9 +89,36 @@ export class ImportStack extends cdk.Stack {
         const importIntegration = new apigateway.LambdaIntegration(importFunction);
 
         const importResource = api.root.addResource('import');
+
+        const authorizerFunctionArn = cdk.Fn.importValue('BasicAuthorizerFunctionArn');
+        const basicAuthorizerHandler = lambda.Function.fromFunctionArn(
+            this,
+            'basicAuthorizerHandler',
+            authorizerFunctionArn
+        );
+
+        const authorizerRole = new iam.Role(this, 'authorizerRole', {
+            assumedBy: new iam.ServicePrincipal('apigateway.amazonaws.com'),
+        });
+
+        authorizerRole.addToPolicy(
+            new iam.PolicyStatement({
+                actions: ['lambda:InvokeFunction'],
+                resources: [basicAuthorizerHandler.functionArn],
+            }),
+        );
+
+        const authorizer = new apigateway.TokenAuthorizer(this, 'tokenAuth', {
+            handler: basicAuthorizerHandler,
+            assumeRole: authorizerRole,
+        });
+
         importResource.addMethod('GET', importIntegration, {
+            authorizer,
+            authorizationType: apigateway.AuthorizationType.CUSTOM,
             requestParameters: {
-                'method.request.querystring.name': true,
+                // 'method.request.querystring.name': true,
+                'method.request.header.Authorization': true,
             },
         });
 
@@ -101,17 +128,17 @@ export class ImportStack extends cdk.Stack {
             allowMethods: apigateway.Cors.ALL_METHODS,
         });
 
-        api.addGatewayResponse('MissingNameQueryParam', {
-            type: apigateway.ResponseType.DEFAULT_4XX,
-            responseHeaders: {
-                'Access-Control-Allow-Origin': "'*'",
-                'Access-Control-Allow-Headers': "'*'",
-            },
-            statusCode: '400',
-            templates: {
-                'application/json': JSON.stringify({ message: 'Missing name query parameter' }),
-            },
-        });
+        // api.addGatewayResponse('MissingNameQueryParam', {
+        //     type: apigateway.ResponseType.DEFAULT_4XX,
+        //     responseHeaders: {
+        //         'Access-Control-Allow-Origin': "'*'",
+        //         'Access-Control-Allow-Headers': "'*'",
+        //     },
+        //     statusCode: '400',
+        //     templates: {
+        //         'application/json': JSON.stringify({ message: 'Missing name query parameter' }),
+        //     },
+        // });
 
         importResource.addCorsPreflight({
             allowOrigins: apigateway.Cors.ALL_ORIGINS,

@@ -1,0 +1,19 @@
+{
+  "name": "authorization-service",
+  "version": "1.0.0",
+  "description": "Authorization Service for AWS Lambda",
+  "main": "lambda",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.0.0",
+    "base-64": "^1.0.0",
+    "dotenv": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.140",
+    "@types/base-64": "^1.0.2",
+    "typescript": "^5.5.2"
+  }
+}
