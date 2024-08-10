@@ -1,0 +1,32 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/eslint-recommended", "plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"],
+  "env": {
+    "mocha": true,
+    "es6": true,
+    "commonjs": true,
+    "browser": true
+  },
+  "rules": {
+    "typescript-eslint/ban-types": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "typescript-eslint/no-unused-vars": "off",
+    "typescript-eslint/no-explicit-any": "off",
+    "typescript-eslint/explicit-function-return-type": "off",
+    "prettier/prettier": [
+      "error",
+      {
+        "useTabs": false,
+        "printWidth": 120,
+        "singleQuote": true,
+        "trailingComma": "es5",
+        "parser": "flow",
+        "semi": false,
+        "bracketSpacing": true,
+        "endOfLine": "auto"
+      }
+    ]
+  }
+}

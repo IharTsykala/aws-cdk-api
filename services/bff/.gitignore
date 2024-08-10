@@ -1,0 +1,17 @@
+*.js
+*.d.ts
+
+.idea
+.vscode
+.env
+
+/dist
+/node_modules
+
+.cdk.staging
+cdk.out
+
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+.ebextensions
