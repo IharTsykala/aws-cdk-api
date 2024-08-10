@@ -1,76 +1,76 @@
-/@ts-nocheck
-import express from 'express'
-import axios from 'axios'
-import dotenv from 'dotenv'
-import NodeCache from 'node-cache'
+import http from 'http';
+import https from 'https';
+import { IncomingMessage, ServerResponse } from 'http';
+import dotenv from 'dotenv';
+import { URL } from 'url';
 
-dotenv.config()
-const app = express()
-const port = process.env.PORT || 3000
+dotenv.config();
 
-const cache = new NodeCache({ stdTTL: 120 })
+const port = process.env.PORT || 3000;
 
-app.use(express.json())
+const handleRequest = (req: IncomingMessage, res: ServerResponse) => {
+    const urlParts = req.url?.split('/');
 
-app.get('/products', async (req: any, res: any) => {
-    const cachedProducts: any = cache.get('products')
-
-    if (cachedProducts) {
-        console.log('Took products from cash')
-        return res.json(cachedProducts)
+    if (!urlParts || urlParts.length < 2) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Bad Request' }));
+        return;
     }
 
-    try {
-        const recipientURL: any = process.env['products']
-        const response: any = await axios.get(`${recipientURL}/products`)
-        const products: any = response.data
+    const recipientServiceName = urlParts[1].toUpperCase();
 
-        cache.set('products', products, 120) // Cache for 2 minutes (120 seconds)
-        console.log('Products was cashed')
+    const recipientBaseURL = process.env[`${recipientServiceName}_BASE_URL`];
 
-        res.json(products)
-    } catch (error) {
-        if (error.response) {
-            res.status(error.response.status).json(error.response.data)
-        } else {
-            res.status(500).json({ error: 'Internal Server Error' })
-        }
+    if (!recipientBaseURL) {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Cannot process request' }));
+        return;
     }
-})
 
-app.all('/:recipientServiceName', async (req: any, res: any) => {
-    try {
-        const recipientServiceName: any = req.params.recipientServiceName
-        const recipientURL: any = process.env[recipientServiceName]
+    const endpointPath = urlParts.slice(2).join('/');
+    const targetURL = new URL(`${recipientBaseURL}/${endpointPath}`);
 
-        if (!recipientURL) {
-            return res.status(502).json({ error: 'Cannot process request' })
-        }
+    const options = {
+        hostname: targetURL.hostname,
+        path: targetURL.pathname + (targetURL.search || ''),
+        method: req.method,
+        headers: {
+            ...req.headers,
+            'Content-Type': 'application/json',
+        },
+    };
 
-        const method: any = req.method
-        const url: any = `${recipientURL}${req.originalUrl}`
-        const token = req.headers.authorization
+    const proxyReq = https.request(options, (proxyRes) => {
+        let data = '';
 
-        const response: any = await axios({
-            method,
-            url,
-            ...(Object.keys(req.body || {}).length > 0 && { data: req.body }),
-            headers: {
-                authorization: token,
+        proxyRes.on('data', (chunk) => {
+            data += chunk;
+        });
+
+        proxyRes.on('end', () => {
+            res.writeHead(proxyRes.statusCode || 500, {
                 'Content-Type': 'application/json',
-            },
-        })
+            });
+            res.end(data);
+        });
+    });
 
-        res.status(response.status).json(response.data)
-    } catch (error: any) {
-        if (error.response) {
-            res.status(error.response.status).json(error.response.data)
-        } else {
-            res.status(500).json({ error: 'Internal Server Error' })
-        }
-    }
-})
+    req.on('data', (chunk) => {
+        proxyReq.write(chunk);
+    });
 
-app.listen(port, () => {
-    console.log(`BFF Service is running on http://localhost:${port}`)
-})
+    req.on('end', () => {
+        proxyReq.end();
+    });
+
+    proxyReq.on('error', (error) => {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Internal Server Error' }));
+    });
+};
+
+const server = http.createServer(handleRequest);
+
+server.listen(port, () => {
+    console.log(`BFF Service is running on http://localhost:${port}`);
+});
