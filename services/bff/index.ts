@@ -3,10 +3,12 @@ import https from 'https';
 import { IncomingMessage, ServerResponse } from 'http';
 import dotenv from 'dotenv';
 import { URL } from 'url';
+import NodeCache from 'node-cache';
 
 dotenv.config();
 
 const port = process.env.PORT || 3000;
+const cache = new NodeCache({ stdTTL: 120 })
 
 const handleRequest = (req: IncomingMessage, res: ServerResponse) => {
     const urlParts = req.url?.split('/');
@@ -30,6 +32,17 @@ const handleRequest = (req: IncomingMessage, res: ServerResponse) => {
     const endpointPath = urlParts.slice(2).join('/');
     const targetURL = new URL(`${recipientBaseURL}/${endpointPath}`);
 
+    if (recipientServiceName === 'PRODUCT' && endpointPath === 'products') {
+        const cachedProducts = cache.get('products');
+
+        if (cachedProducts) {
+            console.log('Returning cached products');
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(cachedProducts));
+            return;
+        }
+    }
+
     const options = {
         hostname: targetURL.hostname,
         path: targetURL.pathname + (targetURL.search || ''),
@@ -48,6 +61,11 @@ const handleRequest = (req: IncomingMessage, res: ServerResponse) => {
         });
 
         proxyRes.on('end', () => {
+            if (recipientServiceName === 'PRODUCT' && endpointPath === 'products' && proxyRes.statusCode === 200) {
+                cache.set('products', JSON.parse(data));
+                console.log('Caching products');
+            }
+
             res.writeHead(proxyRes.statusCode || 500, {
                 'Content-Type': 'application/json',
             });
