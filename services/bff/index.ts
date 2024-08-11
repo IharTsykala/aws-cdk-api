@@ -8,7 +8,7 @@ import NodeCache from 'node-cache';
 dotenv.config();
 
 const port = process.env.PORT || 3000;
-const cache = new NodeCache({ stdTTL: 120 })
+const cache = new NodeCache({ stdTTL: 120 });
 
 const handleRequest = (req: IncomingMessage, res: ServerResponse) => {
     const urlParts = req.url?.split('/');
@@ -20,7 +20,6 @@ const handleRequest = (req: IncomingMessage, res: ServerResponse) => {
     }
 
     const recipientServiceName = urlParts[1].toUpperCase();
-
     const recipientBaseURL = process.env[`${recipientServiceName}_BASE_URL`];
 
     if (!recipientBaseURL) {
@@ -50,7 +49,9 @@ const handleRequest = (req: IncomingMessage, res: ServerResponse) => {
         headers: {
             ...req.headers,
             'Content-Type': 'application/json',
+            'Host': targetURL.hostname,
         },
+        servername: targetURL.hostname,
     };
 
     const proxyReq = https.request(options, (proxyRes) => {
@@ -73,17 +74,18 @@ const handleRequest = (req: IncomingMessage, res: ServerResponse) => {
         });
     });
 
+    proxyReq.on('error', (error) => {
+        console.log("Request error:", error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Internal Server Error' }));
+    });
+
     req.on('data', (chunk) => {
         proxyReq.write(chunk);
     });
 
     req.on('end', () => {
         proxyReq.end();
-    });
-
-    proxyReq.on('error', (error) => {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Internal Server Error' }));
     });
 };
 
